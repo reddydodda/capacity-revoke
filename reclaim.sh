@@ -38,8 +38,8 @@ FROM (
 	     ) quota_join
 GROUP BY project_id;")
 
-elif [ "$region_name" == "PO-A" ]; then
-#PO-A Logic with SSH protocal
+elif [ "$region_name" == "region-2" ]; then
+#region-02 Logic with SSH protocal
 project_list=$(ssh $host_ip "mysql -u $username -p$password -N -e \"SELECT '$region_name' As Region, '$host_ip' As HostIP, project_id, sum(ram_allocated), sum(cpu_allocated), sum(ram_used), sum(cpu_used), ROUND((1-sum(ram_used) / sum(ram_allocated) ) * 100) As UnUsed_Ram_Percentage,  ROUND((1-sum(cpu_used) / sum(cpu_allocated) ) * 100) As UnUsed_cpu_Percentage
 FROM (
 	SELECT 	project_id,
@@ -92,9 +92,7 @@ done
         # Calc new Project limits
         # Exclude Projects reported from the list
         if [ -n "$project_name" ]; then
-            if [[ "${project_name,,}" != "comcast-admin" ]] && [[ "${project_name,,}" != "adt-laas_prod" ]] && [[ "${project_name,,}" != "cdn" ]] && \
-            [[ "${project_name,,}" != "iris" ]] && [[ "${project_name,,}" != "next-gen-communication" ]] && [[ "${project_name,,}" != "pulsar" ]] && [[ "${project_name,,}" != "xre-prod" ]] && \
-            [[ "${project_name,,}" != "ncso"* ]] && [[ "${project_name,,}" != "sdn"* ]] && [[ "${project_name,,}" != "residential"* ]] && [[ "${project_name,,}" != "sdwan"* ]]
+            if [[ "${project_name,,}" != "admin" ]]
             then
                 if [ "$ram_unused_percentage" -ge 80 ] 
     		    then
@@ -131,9 +129,8 @@ YYYYMMDD=`date +%Y%m%d`
 for team_list_a in $(cat $path/project_email.txt); do
     team_name_a=$(echo $team_list_a | awk '{print $1}')
     TOEMAIL=$(echo $team_list_a | awk '{print $2}')
-#    TOEMAIL="chandra_dodda@comcast.com"
-    CCEMAIL="Cloud_Services-Quota_Reclamation_@comcast.com";
-    FREMAIL="Cloud_Services-Quota_Reclamation_@comcast.com";
+    CCEMAIL="csreddy@stylesyou.com";
+    FREMAIL="csreddy@stylesyou.com";
     SUBJECT="Action Required: Unused Quota Reclamation ($team_name_a) - $YYYYMMDD";
 (
 echo "From: $FREMAIL "
@@ -222,15 +219,9 @@ done
 fun_pull_email()
 {
 IFS=$'\n'
-  #In this Function we pull email address
-#  my_user=$(cat $path/.username)
-#  my_pass=$(cat $path/.password)
   for team in $(cat $path/project_revoke_list.txt); do
       t_name=$(echo $team | awk '{print $3}')
-      # Curl LDAP server and get email address
-#       t_email=$(curl -s --ntlm -u cable\\${my_user}:${my_pass} "ldaps://adapps.cable.comcast.com:3269/dc=comcast,dc=com?memberOf?sub?(memberOf=CN=${t_name},OU=Elastic Cloud,OU=Enterprise Application Groups,DC=cable,DC=comcast,DC=com)" --insecure | grep "DN:" | sed 's/DN: CN=//g' | sed 's/,OU.*//g' | sed 's/\\//g' | while read ntid; do if [[ $ntid == *,* ]]; then a_name=$(echo $ntid | sed -e "s/(/\\\(/g" -e "s/)/\\\)/g"); curl -s --ntlm -u cable\\${my_user}:${my_pass} "ldaps://adapps.cable.comcast.com:3269/dc=comcast,dc=com?mail,mail?sub?(CN=${a_name})" --insecure | grep mail | sed 's/^.*mail: //g' | tr '\n' ','; else curl -s --ntlm -u cable\\${my_user}:${my_pass} "ldaps://adapps.cable.comcast.com:3269/dc=comcast,dc=com?mail,sAMAccountName?sub?(sAMAccountName=${ntid})" --insecure | grep mail | sed 's/^.*mail: //g'; fi; done | sed 's/,$//g')  
-        t_email=$(curl -s --ntlm -u cable\\${my_user}:${my_pass} "ldaps://adapps.cable.comcast.com:3269/dc=comcast,dc=com?memberOf?sub?(memberOf=CN=${t_name},OU=Elastic Cloud,OU=Enterprise Application Groups,DC=cable,DC=comcast,DC=com)" --insecure | grep "DN:" | sed 's/DN: CN=//g' | sed 's/,OU.*//g' | sed 's/\\//g' | while read ntid; do if [[ $ntid == *,* ]]; then a_name=$(echo $ntid | sed -e "s/(/\\\(/g" -e "s/)/\\\)/g"); curl -s --ntlm -u cable\\${my_user}:${my_pass} "ldaps://adapps.cable.comcast.com:3269/dc=comcast,dc=com?mail,mail?sub?(CN=${a_name})" --insecure | grep mail | sed 's/^.*mail: //g' | tr '\n' ','; else curl -s --ntlm -u cable\\${my_user}:${my_pass} "ldaps://adapps.cable.comcast.com:3269/dc=comcast,dc=com?mail,sAMAccountName?sub?(sAMAccountName=${ntid})" --insecure | grep mail | sed 's/^.*mail: //g'; fi; done | tr '\n' ',' | sed 's/,$//g')
-        printf "$t_name\t $t_email \n"
+      printf "$t_name\t $t_email \n"
   done 2>> /dev/null | awk '!seen[$0]++' >> $path/project_email.txt
 
 }
@@ -238,10 +229,10 @@ IFS=$'\n'
 #main Program
 echo "`date`: Fetching NON-Icehouse Projects List"
 YYYYMMDD=`date +%Y%m%d`
-path="/home/piops/automation-scripts/quota_and_usage_report/resource-allocation-graphs/revoke"
-venv_path="/home/piops/automation-scripts/quota_and_usage_report/resource-allocation-graphs"
+path=$(echo $PWD)
+venv_path=$(echo $PWD)
 IFS=$'\n'
-username="capacity"
+username="reddydodda"
 password=$(cat $path/.mysql_password)
 my_user=$(cat $path/.username)
 my_pass=$(cat $path/.password)
